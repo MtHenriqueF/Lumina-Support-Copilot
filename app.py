@@ -8,12 +8,12 @@ from werkzeug.exceptions import HTTPException
 from config import build_model_catalog, get_settings
 from errors import APIError, InternalAPIError
 from routes.support import support_bp
-from services.openai_service import OpenAIService
+from services.langchain_service import LangChainSupportService
 from services.support_service import SupportCopilotService
 from utils.logging import configure_logging, log_event
 
 
-def create_app(test_config: dict | None = None, openai_service: OpenAIService | None = None) -> Flask:
+def create_app(test_config: dict | None = None, ai_service: LangChainSupportService | None = None) -> Flask:
     app = Flask(__name__)
     app.config.update(get_settings())
 
@@ -27,9 +27,10 @@ def create_app(test_config: dict | None = None, openai_service: OpenAIService | 
     configure_logging(app.config["LOG_LEVEL"])
     logger = logging.getLogger("lumina.app")
 
-    provider = openai_service or OpenAIService(
+    provider = ai_service or LangChainSupportService(
         api_key=app.config["OPENAI_API_KEY"],
         timeout=app.config["OPENAI_TIMEOUT_SECONDS"],
+        model_aliases=app.config["MODEL_ALIASES"],
     )
     app.extensions["support_service"] = SupportCopilotService(provider)
 

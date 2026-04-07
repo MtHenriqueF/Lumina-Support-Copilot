@@ -9,7 +9,7 @@ Lumina Support Copilot transforms raw customer messages into a structured suppor
 The project was designed as a portfolio-ready support workspace with:
 
 - Flask backend organized with routes, services, schemas, and centralized configuration
-- OpenAI integration using the official Python SDK
+- LangChain + LCEL orchestration over OpenAI models
 - Pydantic validation for structured responses
 - Resilient parsing and safe fallback behavior when the model returns invalid JSON
 - Dashboard-style frontend with chat, insights panel, and responsive UX
@@ -49,7 +49,9 @@ docs/insights-panel.png
 
 - Python
 - Flask
-- OpenAI Python SDK
+- LangChain
+- LangChain OpenAI
+- OpenAI API
 - Pydantic
 - python-dotenv
 - HTML, CSS, JavaScript
@@ -67,7 +69,7 @@ docs/insights-panel.png
 ├── schemas/
 │   └── support.py
 ├── services/
-│   ├── openai_service.py
+│   ├── langchain_service.py
 │   └── support_service.py
 ├── static/
 │   ├── script.js

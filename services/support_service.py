@@ -5,6 +5,7 @@ import logging
 import re
 import time
 
+from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import ValidationError as PydanticValidationError
 
 from errors import InternalAPIError, ProviderAPIError
@@ -181,15 +182,17 @@ STOPWORDS = {
 class SupportCopilotService:
     def __init__(self, openai_service):
         self.openai_service = openai_service
+        self.output_parser = PydanticOutputParser(pydantic_object=SupportTicketResponse)
 
     def generate_ticket_payload(self, *, user_message: str, model_alias: str, model_id: str) -> dict:
         started_at = time.perf_counter()
 
         try:
             raw_response = self.openai_service.generate_structured_text(
-                model=model_id,
+                model_alias=model_alias,
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_message,
+                format_instructions=self.output_parser.get_format_instructions(),
             )
             payload, parse_success = self._parse_response(raw_response, user_message)
         except ProviderAPIError:
@@ -233,6 +236,19 @@ class SupportCopilotService:
         return payload.model_dump()
 
     def _parse_response(self, raw_response: str, user_message: str) -> tuple[SupportTicketResponse, bool]:
+        try:
+            payload = self.output_parser.parse(raw_response)
+            payload = self._repair_payload(payload, user_message)
+            return payload, True
+        except Exception as error:
+            log_event(
+                logger,
+                "warning",
+                "parser_retrying",
+                error_type=type(error).__name__,
+                parser="PydanticOutputParser",
+            )
+
         candidate_json = self._extract_json_object(raw_response)
         if candidate_json:
             try:

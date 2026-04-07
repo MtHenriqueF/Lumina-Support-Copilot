@@ -7,7 +7,14 @@ class FakeOpenAIService:
     def __init__(self, response_text: str):
         self.response_text = response_text
 
-    def generate_structured_text(self, *, model: str, system_prompt: str, user_prompt: str) -> str:
+    def generate_structured_text(
+        self,
+        *,
+        model_alias: str,
+        system_prompt: str,
+        user_prompt: str,
+        format_instructions: str,
+    ) -> str:
         return self.response_text
 
 
@@ -17,7 +24,7 @@ def build_client(response_text: str = ""):
             "TESTING": True,
             "OPENAI_API_KEY": "test-key",
         },
-        openai_service=FakeOpenAIService(response_text),
+        ai_service=FakeOpenAIService(response_text),
     )
     return app.test_client()
 
