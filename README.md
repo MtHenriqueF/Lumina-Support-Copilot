@@ -16,19 +16,17 @@ The project was designed as a portfolio-ready support workspace with:
 
 ## Demo
 
-Demo video stored in:
+Demo preview for GitHub:
 
 ```text
-docs/Gravação de tela de 2026-04-07 16-14-14.mp4
+docs/lumina-demo.gif
 ```
 
-Embedded preview:
+![Lumina Support Copilot Demo](./docs/lumina-demo.gif)
 
-<video src="./docs/Grava%C3%A7%C3%A3o%20de%20tela%20de%202026-04-07%2016-14-14.mp4" controls width="100%"></video>
+Full video:
 
-If GitHub does not render the embedded player in your view, use the direct link below:
-
-[Watch the demo video](./docs/Grava%C3%A7%C3%A3o%20de%20tela%20de%202026-04-07%2016-14-14.mp4)
+[Watch the demo video](./docs/lumina-demo.mp4)
 
 You can also add screenshots such as:
 
