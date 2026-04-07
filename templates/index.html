@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand-block">
+                <div class="brand-mark" aria-hidden="true">L</div>
+                <div class="brand-copy">
+                    <p class="eyebrow">AI support operations</p>
+                    <h1>{{ app_name }}</h1>
+                    <p>{{ app_subtitle }}</p>
+                </div>
+            </div>
+            <button id="clearBtn" class="ghost-button" type="button" hidden aria-label="Limpar conversa atual">
+                Limpar chat
+            </button>
+        </header>
+
+        <main class="workspace">
+            <section class="chat-column">
+                <div class="hero-card" id="welcomeScreen">
+                    <div class="hero-copy">
+                        <span class="hero-badge">Structured ticket triage</span>
+                        <h2>Transforme mensagens soltas em analise, prioridade e resposta pronta para atendimento.</h2>
+                        <p>
+                            O Lumina Support Copilot classifica tickets, resume o problema, detecta idioma,
+                            recomenda proximos passos e monta uma resposta final com contexto operacional.
+                        </p>
+                    </div>
+                    <div class="suggestions-panel" aria-label="Sugestoes de prompts iniciais">
+                        <button class="suggestion-chip" type="button" data-prompt="O cliente informa que nao consegue redefinir a senha desde ontem e recebe erro 500 ao tentar entrar no painel.">
+                            Problema tecnico de login
+                        </button>
+                        <button class="suggestion-chip" type="button" data-prompt="Recebi cobranca duplicada na mesma assinatura e preciso entender se houve renovacao indevida.">
+                            Cobranca duplicada
+                        </button>
+                        <button class="suggestion-chip" type="button" data-prompt="The customer says the onboarding email never arrived and wants to know the next step without waiting for a human reply.">
+                            Follow-up em ingles
+                        </button>
+                    </div>
+                </div>
+
+                <section class="conversation-card" aria-label="Conversa principal">
+                    <div class="conversation-header">
+                        <div>
+                            <p class="section-label">Conversation</p>
+                            <h3>Support workspace</h3>
+                        </div>
+                        <div class="status-pill" id="statusPill">Pronto para analisar</div>
+                    </div>
+
+                    <div class="messages-area" id="messagesArea" aria-live="polite">
+                        <div id="messagesContainer" class="messages-container"></div>
+
+                        <div id="loadingIndicator" class="loading-indicator" hidden>
+                            <div class="loading-card">
+                                <div class="loading-avatar"></div>
+                                <div class="loading-copy">
+                                    <div class="loading-line short"></div>
+                                    <div class="loading-line"></div>
+                                    <div class="loading-line medium"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="messagesEnd"></div>
+                    </div>
+
+                    <form id="chatForm" class="composer" novalidate>
+                        <div class="composer-toolbar">
+                            <div class="field-group">
+                                <label for="modelSelect">Modelo</label>
+                                <select id="modelSelect" class="model-select" aria-describedby="modelHint">
+                                    {% for item in model_catalog %}
+                                    <option value="{{ item.value }}" {% if item.value == default_model %}selected{% endif %}>
+                                        {{ item.label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <p class="field-hint" id="modelHint">
+                                {% for item in model_catalog %}
+                                <span data-model-hint="{{ item.value }}" {% if item.value != default_model %}hidden{% endif %}>{{ item.hint }}</span>
+                                {% endfor %}
+                            </p>
+                        </div>
+
+                        <div class="composer-body">
+                            <label class="sr-only" for="messageInput">Descreva o ticket do cliente</label>
+                            <textarea
+                                id="messageInput"
+                                class="message-textarea"
+                                placeholder="Descreva a solicitacao do cliente. Enter envia, Shift+Enter cria nova linha."
+                                rows="1"
+                                maxlength="{{ message_max_chars }}"
+                                aria-describedby="composerMeta"
+                            ></textarea>
+
+                            <button type="submit" id="sendButton" class="primary-button" aria-label="Enviar mensagem para analise">
+                                <span id="sendLabel">Analisar ticket</span>
+                                <span id="loadingSpinner" class="button-spinner" hidden aria-hidden="true"></span>
+                            </button>
+                        </div>
+
+                        <div class="composer-meta" id="composerMeta">
+                            <span id="charCounter">0 / {{ message_max_chars }}</span>
+                            <span>Resposta estruturada com resumo, prioridade, tags e sugestao final.</span>
+                        </div>
+                    </form>
+                </section>
+            </section>
+
+            <aside class="insights-column" aria-label="Painel de insights">
+                <section class="insights-card">
+                    <div class="insights-header">
+                        <div>
+                            <p class="section-label">Response insights</p>
+                            <h3>Operational snapshot</h3>
+                        </div>
+                        <div id="lastMeta" class="mini-meta">Sem respostas ainda</div>
+                    </div>
+
+                    <div id="emptyInsights" class="empty-state">
+                        <div class="empty-icon" aria-hidden="true">+</div>
+                        <h4>A ultima resposta estruturada aparece aqui</h4>
+                        <p>Depois da primeira analise, o painel mostra resumo, categoria, prioridade, idioma, sentimento, tags e resposta sugerida.</p>
+                    </div>
+
+                    <div id="insightsContent" class="insights-content" hidden>
+                        <div class="summary-card">
+                            <p class="summary-label">Summary</p>
+                            <p id="summaryText" class="summary-text"></p>
+                        </div>
+
+                        <div class="metrics-grid">
+                            <article class="metric-card">
+                                <span class="metric-label">Priority</span>
+                                <span id="priorityBadge" class="badge priority-medium">Medium</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Category</span>
+                                <span id="categoryBadge" class="badge category-general">General</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Language</span>
+                                <span id="languageBadge" class="badge neutral-badge">pt-BR</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Resolution</span>
+                                <span id="resolutionBadge" class="badge neutral-badge">Em aberto</span>
+                            </article>
+                        </div>
+
+                        <div class="sentiment-card">
+                            <div class="sentiment-header">
+                                <span class="metric-label">Sentiment</span>
+                                <strong id="sentimentValue">50</strong>
+                            </div>
+                            <div class="sentiment-bar" aria-hidden="true">
+                                <span id="sentimentBarFill" class="sentiment-fill tone-neutral"></span>
+                            </div>
+                        </div>
+
+                        <div class="tags-card">
+                            <span class="metric-label">Tags</span>
+                            <div id="tagsList" class="tags-list"></div>
+                        </div>
+
+                        <div class="detail-card">
+                            <div class="detail-header">
+                                <span class="detail-kicker">Recommended action</span>
+                            </div>
+                            <p id="actionText" class="detail-text"></p>
+                        </div>
+
+                        <div class="detail-card reply-card">
+                            <div class="detail-header">
+                                <span class="detail-kicker">Suggested reply</span>
+                            </div>
+                            <p id="responseText" class="detail-text"></p>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        window.APP_CONFIG = {{ {
+            "defaultModel": default_model,
+            "messageMaxChars": message_max_chars,
+            "modelCatalog": model_catalog
+        } | tojson }};
+    </script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
