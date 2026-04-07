@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from config import get_settings
-from services.openai_service import OpenAIService
+from services.langchain_service import LangChainSupportService
 from services.support_service import SupportCopilotService
 
 _SETTINGS = get_settings()
 _SERVICE = SupportCopilotService(
-    OpenAIService(
+    LangChainSupportService(
         api_key=_SETTINGS["OPENAI_API_KEY"],
         timeout=_SETTINGS["OPENAI_TIMEOUT_SECONDS"],
+        model_aliases=_SETTINGS["MODEL_ALIASES"],
     )
 )
 _LEGACY_MODEL_MAPPING = {
